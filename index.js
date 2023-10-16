@@ -53,6 +53,9 @@ async function run() {
 
         // Collections
         const usersCollection = client.db("travelling").collection("users");
+        const roomsCollection = client.db("travelling").collection("hotels");
+        const cartsCollection = client.db("travelling").collection("carts");
+        const paymentsCollection = client.db("travelling").collection("payments");
 
         // user related API
         app.get("/all-users", async (req, res) => {
@@ -119,22 +122,99 @@ async function run() {
             res.send(result);
         })
 
+        // Rooms related Api
+        app.get("/all-rooms", async (req, res) => {
+            const result = await roomsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.get("/rooms/:id", async (req, res) => {
+            const id = req.params.id;
+            // console.log(id);
+            const query = { _id: new ObjectId(id) }
+            const result = await roomsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        // TODO: verify Admin
+        app.put('/edit-room/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedRoom = req.body;
+            const room = {
+                $set: {
+                    
+                }
+            };
+            const result = await roomsCollection.updateOne(filter, room, options);
+            res.send(result);
+        })
+
+        // TODO: verify Admin
+        app.post("/add-room", async (req, res) => {
+            const room = req.body;
+            const result = await roomsCollection.insertOne(room);
+            res.send(result)
+        })
+
+        // TODO: verify Admin
+        app.delete('/delete-room/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await roomsCollection.deleteOne(query);
+            res.send(result);
+        })
+
         // review related API
         app.get("/get-review", async (req, res) => {
             const result = await reviewsCollection.find().toArray();
             res.send(result);
         });
 
-        app.post("/add-review", verifyJWT, async (req, res) => {
+        app.post("/add-review", async (req, res) => {
             const email = req.body.email;
             const review = req.body;
-            const decodedEmail = req.decoded.email;
+            // const decodedEmail = req.decoded.email;
 
-            if (email !== decodedEmail) {
-                return res.status(403).send({ error: "forbidden access" });
-            }
+            // if (email !== decodedEmail) {
+            //     return res.status(403).send({ error: "forbidden access" });
+            // }
             const result = await reviewsCollection.insertOne(review);
             res.send(result);
+        });
+
+        // Payment related API
+
+        app.get('/get-payment/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await paymentsCollection.find(query).toArray()
+            res.send(result);
+        })
+
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+            // console.log(price);
+            const amount = parseFloat((price * 100).toFixed(2));
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ["card"],
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            });
+        });
+
+        app.post("/payment", async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const query = { UserEmail: payment?.email }
+            // console.log(query);
+            const deleteResult = await cartsCollection.deleteMany(query)
+            // console.log(deleteResult);
+            res.send({ result, deleteResult });
         });
 
         // JWT related api
