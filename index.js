@@ -53,7 +53,7 @@ async function run() {
 
         // Collections
         const usersCollection = client.db("travelling").collection("users");
-        const roomsCollection = client.db("travelling").collection("hotels");
+        const hotelsCollection = client.db("travelling").collection("hotels");
         const cartsCollection = client.db("travelling").collection("carts");
         const paymentsCollection = client.db("travelling").collection("payments");
 
@@ -124,15 +124,15 @@ async function run() {
 
         // Rooms related Api
         app.get("/all-rooms", async (req, res) => {
-            const result = await roomsCollection.find(query).toArray();
+            const result = await hotelsCollection.find().toArray();
             res.send(result);
         })
 
-        app.get("/rooms/:id", async (req, res) => {
+        app.get("/room/:id", async (req, res) => {
             const id = req.params.id;
             // console.log(id);
             const query = { _id: new ObjectId(id) }
-            const result = await roomsCollection.find(query).toArray();
+            const result = await hotelsCollection.find(query).toArray();
             res.send(result);
         })
 
@@ -147,14 +147,14 @@ async function run() {
                     
                 }
             };
-            const result = await roomsCollection.updateOne(filter, room, options);
+            const result = await hotelsCollection.updateOne(filter, room, options);
             res.send(result);
         })
 
         // TODO: verify Admin
         app.post("/add-room", async (req, res) => {
             const room = req.body;
-            const result = await roomsCollection.insertOne(room);
+            const result = await hotelsCollection.insertOne(room);
             res.send(result)
         })
 
@@ -162,7 +162,7 @@ async function run() {
         app.delete('/delete-room/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
-            const result = await roomsCollection.deleteOne(query);
+            const result = await hotelsCollection.deleteOne(query);
             res.send(result);
         })
 
@@ -173,7 +173,7 @@ async function run() {
         });
 
         app.post("/add-review", async (req, res) => {
-            const email = req.body.email;
+            // const email = req.body.email;
             const review = req.body;
             // const decodedEmail = req.decoded.email;
 
