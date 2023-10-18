@@ -55,6 +55,7 @@ async function run() {
         const usersCollection = client.db("travelling").collection("users");
         const hotelsCollection = client.db("travelling").collection("hotels");
         const cartsCollection = client.db("travelling").collection("carts");
+        const reviewsCollection = client.db("travelling").collection("reviews");
         const paymentsCollection = client.db("travelling").collection("payments");
 
         // user related API
@@ -144,7 +145,7 @@ async function run() {
             const updatedRoom = req.body;
             const room = {
                 $set: {
-                    
+
                 }
             };
             const result = await hotelsCollection.updateOne(filter, room, options);
@@ -164,6 +165,30 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const result = await hotelsCollection.deleteOne(query);
             res.send(result);
+        })
+
+        // Cart related API
+        app.get('/carts/:email', async (req, res) => {
+            const email = req.params.email;
+            if (!email) {
+                res.send([]);
+            }
+            const query = { UserEmail: email };
+            const result = await cartsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.post('/carts', async (req, res) => {
+            const items = req.body;
+            const result = await cartsCollection.insertOne(items);
+            res.send(result);
+        })
+
+        app.delete("/carts/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await cartsCollection.deleteOne(query);
+            res.send(result)
         })
 
         // review related API
