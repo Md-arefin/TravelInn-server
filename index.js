@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.port || 5000;
 
@@ -129,6 +130,16 @@ async function run() {
             res.send(result);
         })
 
+        app.get("/lowest", async (req, res) => {               
+            const result = await hotelsCollection.find({}).sort({price_per_night: 1}).toArray();
+            res.send(result);
+        })
+
+        app.get("/highest", async (req, res) => {               
+            const result = await hotelsCollection.find({}).sort({price_per_night: -1}).toArray();
+            res.send(result);
+        })
+
         app.get("/room/:id", async (req, res) => {
             const id = req.params.id;
             // console.log(id);
@@ -220,7 +231,7 @@ async function run() {
 
         app.post('/create-payment-intent', async (req, res) => {
             const { price } = req.body;
-            // console.log(price);
+            console.log(price);
             const amount = parseFloat((price * 100).toFixed(2));
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
